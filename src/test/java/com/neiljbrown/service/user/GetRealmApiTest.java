@@ -30,6 +30,7 @@ import io.restassured.RestAssured;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,11 +42,22 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
 
   private static final Logger logger = LoggerFactory.getLogger(GetRealmApiTest.class);
 
-  /** List of one or more relams created by a test. Supports deleting realms as part of tearing down tests. */
+  /**
+   * List of one or more relams created by a test. Supports deleting realms as part of tearing down tests.
+   */
   private List<UserRealmDto> createdRealms = new ArrayList<>();
 
+  @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    RestAssured.basePath = UserRealmApiConstants.GET_REALM_URL_PATH;
+  }
+
+  @Override
   @After
   public void tearDown() {
+    super.tearDown();
     this.createdRealms.forEach(this::tearDownCreatedRealm);
   }
 
@@ -55,11 +67,11 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void whenUnsupportedHttpMethodPost() {
     RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, 1)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, 1)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
   }
 
   /**
@@ -69,12 +81,12 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void givenUnsupportedMediaTypeJson() {
     RestAssured.given()
-        .accept(ContentType.APPLICATION_JSON.getMimeType())
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, 1)
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_NOT_ACCEPTABLE).body(isEmptyOrNullString());
+      .accept(ContentType.APPLICATION_JSON.getMimeType())
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, 1)
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_NOT_ACCEPTABLE).body(isEmptyOrNullString());
   }
 
   /**
@@ -86,17 +98,17 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   public void givenRealmIdLessThanMinZero() {
     final int realmId = UserRealmConstants.ID_MIN - 1;
     RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, realmId)
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            // Example of using XPath. For this purpose, XPath is clunkier than GPath and also the failure diagnostics
-            // are not as good - the failure error message reports the whole actual XML document rather than just the
-            // element in the field being asserted (as is the case when using GPath).
-            hasXPath("/error/code/text()"), equalTo("InvalidRealmId"),
-            hasXPath("/error/message/text()"), equalTo("Invalid realm id [" + realmId + "]."));
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        // Example of using XPath. For this purpose, XPath is clunkier than GPath and also the failure diagnostics
+        // are not as good - the failure error message reports the whole actual XML document rather than just the
+        // element in the field being asserted (as is the case when using GPath).
+        hasXPath("/error/code/text()"), equalTo("InvalidRealmId"),
+        hasXPath("/error/message/text()"), equalTo("Invalid realm id [" + realmId + "]."));
   }
 
   /**
@@ -108,14 +120,14 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   public void givenRealmIdGreaterThanMax() {
     final int realmId = UserRealmConstants.ID_MAX + 1;
     RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, realmId)
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            "error.code", equalTo("InvalidRealmId"),
-            "error.message", equalTo("Invalid realm id [" + realmId + "]."));
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        "error.code", equalTo("InvalidRealmId"),
+        "error.message", equalTo("Invalid realm id [" + realmId + "]."));
   }
 
   /**
@@ -127,14 +139,14 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   public void givenRealmIdNonInteger() {
     final String realmId = "foo";
     RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, realmId)
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            "error.code", equalTo("InvalidRealmId"),
-            "error.message", equalTo("Invalid realm id [" + realmId + "]."));
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        "error.code", equalTo("InvalidRealmId"),
+        "error.message", equalTo("Invalid realm id [" + realmId + "]."));
   }
 
   /**
@@ -148,14 +160,14 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
     this.deleteRealmResource(realmId);
 
     RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, realmId)
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_NOT_FOUND)
-        .body(
-            "error.code", equalTo("RealmNotFound"),
-            "error.message", equalTo("Realm [" + realmId + "] not found."));
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_NOT_FOUND)
+      .body(
+        "error.code", equalTo("RealmNotFound"),
+        "error.message", equalTo("Realm [" + realmId + "] not found."));
   }
 
   /**
@@ -165,52 +177,42 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   public void givenRealmExistsWithAllFields() {
     final UserRealmDto realmToCreate = new UserRealmDto(generateUniqueRealmName(), generateRealmDescription());
     final UserRealmDto createdRealm = createRealmResource(realmToCreate);
-    
+
     this.createdRealms.add(createdRealm);
 
     UserRealmDto gotRealm = RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_OK)
-        .body(not(isEmptyOrNullString()))
-        .extract().as(UserRealmDto.class);
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_OK)
+      .body(not(isEmptyOrNullString()))
+      .extract().as(UserRealmDto.class);
 
     assertRealm(gotRealm, createdRealm);
   }
-  
+
   /**
-   * Tests the case when the requested realm exists and is only populated with mandatory fields - ID, key and name. 
+   * Tests the case when the requested realm exists and is only populated with mandatory fields - ID, key and name.
    */
   @Test
   public void givenRealmExistsWithMandatoryFieldsOnly() {
     final UserRealmDto realmToCreate = new UserRealmDto(generateUniqueRealmName());
-    final UserRealmDto createdRealm = createRealmResource(realmToCreate);    
-    assertThat(createdRealm.getDescription()).isNull();    
-    
+    final UserRealmDto createdRealm = createRealmResource(realmToCreate);
+    assertThat(createdRealm.getDescription()).isNull();
+
     this.createdRealms.add(createdRealm);
 
     UserRealmDto gotRealm = RestAssured.given()
-        .pathParam(UserApiService.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
-        .when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_OK)
-        .body(not(isEmptyOrNullString()))
-        .extract().as(UserRealmDto.class);
+      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
+      .when()
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_OK)
+      .body(not(isEmptyOrNullString()))
+      .extract().as(UserRealmDto.class);
 
     assertRealm(gotRealm, createdRealm);
-  }  
-
-  /**
-   * {@inheritDoc}
-   * <p>
-   * Returns the API base path for the Get Realm APi.
-   */
-  @Override
-  protected String getApiUrlPath() {
-    return UserApiService.GET_REALM_URL_PATH;
   }
 
   /**

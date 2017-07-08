@@ -15,24 +15,28 @@
  */
 package com.neiljbrown.service.user;
 
-import static org.hamcrest.Matchers.isEmptyOrNullString;
-import static org.hamcrest.Matchers.not;
-
-import java.util.UUID;
-
-import org.apache.commons.lang3.RandomStringUtils;
-import org.apache.commons.lang3.Validate;
-import org.apache.http.HttpStatus;
-import org.apache.http.entity.ContentType;
-import org.junit.Before;
-import org.slf4j.Logger;
-
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
 import com.neiljbrown.service.user.dto.UserRealmDto;
-
 import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.specification.RequestSpecification;
+import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.Validate;
+import org.apache.http.HttpStatus;
+import org.apache.http.entity.ContentType;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.slf4j.Logger;
+
+import java.util.UUID;
+
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
+import static org.hamcrest.Matchers.isEmptyOrNullString;
+import static org.hamcrest.Matchers.not;
+
 
 /**
  * Abstract base class providing common behaviour and state for functional tests of Realm APIs.
@@ -43,6 +47,16 @@ public abstract class AbstractRealmApiTest {
   private static final String SYS_PROP_ALWAYS_LOG_REQ_AND_RESP = SYS_PROP_PREFIX + "alwaysLogReqAndResp";
 
   /**
+   * Automate the startup and shutdown of the WireMock mock HTTP server before and after the execution of each test to
+   * support stubbing HTTP response and verifying HTTP requests.
+   * <p>
+   * Configure WireMock to pick a random free HTTP(S) port, rather than the default of always listening on 8080, which
+   * may be in use. The utilised port can subsequently be discovered using wireMockRule.port() and httpsPort().
+   */
+  @Rule
+  public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort().dynamicHttpsPort());
+
+  /**
    * Flag controlling whether HTTP requests and response issued by tests are always logged. Intended to support
    * debugging exact behaviour of tests, even when they pass. Defaults to false - requests and responses will only be
    * logged if assertions fail. Can be set at runtime using system property {@link #SYS_PROP_ALWAYS_LOG_REQ_AND_RESP}.
@@ -50,9 +64,14 @@ public abstract class AbstractRealmApiTest {
   private boolean alwaysLogRequestAndResponse;
 
   @Before
-  public void setUp() {
+  public void setUp() throws Exception {
     initAlwaysLogRequestAndResponse();
     configureRestAssuredRequestAndResponseDefaults();
+  }
+
+  @After
+  public void tearDown() {
+    WireMock.reset();
   }
 
   private void configureRestAssuredRequestAndResponseDefaults() {
@@ -62,16 +81,16 @@ public abstract class AbstractRealmApiTest {
   }
 
   private void configureRestAssuredRequestDefaults() {
-    RestAssured.baseURI = UserApiService.getRootUrl();
-    RestAssured.port = UserApiService.getPort();
-    RestAssured.basePath = this.getApiUrlPath();
-    RestAssured.requestSpecification = createDefaultRequestSpecification();
-  }
+    // Rest Assured's default baseURI (http://localhost) suffices, because it's default hostname (localhost) matches the
+    // IP address that the stubbed WireMock server binds to / listens on by default (0.0.0.0)
+    //RestAssured.baseURI = "http://localhost";
 
-  /**
-   * @return The URL path of the API under test.
-   */
-  protected abstract String getApiUrlPath();
+    RestAssured.port = wireMockRule.port();
+    RestAssured.requestSpecification = createDefaultRequestSpecification();
+
+    // RestAssured.basePath is config'd in concrete sub-classes as it's the easiest way to configure the full URL path
+    // for every test method, once, and once set RestAssured doesn't provide an easy way to query it or append to it.
+  }
 
   /**
    * @return The Logger for this class.
@@ -81,13 +100,13 @@ public abstract class AbstractRealmApiTest {
   /**
    * Create and configure a default RequestSpecification which ensures that by default all requests have the typically
    * required Accept request header for the API under test.
-   * 
+   *
    * @return The REST Assured {@link RequestSpecification}
    */
   protected RequestSpecification createDefaultRequestSpecification() {
     RequestSpecification defaultRequestSpec = new RequestSpecBuilder()
-        .setAccept(ContentType.APPLICATION_XML.getMimeType())
-        .build();
+      .setAccept(ContentType.APPLICATION_XML.getMimeType())
+      .build();
     if (this.isAlwaysLogRequestAndResponse()) {
       defaultRequestSpec.log().all();
     }
@@ -109,47 +128,47 @@ public abstract class AbstractRealmApiTest {
   /**
    * Invokes a Create Realm API call to the User service to create a realm using the supplied realm details, asserts the
    * call was successful, and if so returns an object representation of the created realm resource.
-   * 
+   *
    * @param userRealm A {@link UserRealmDto} containing the details of the realm resource to create
    * @return A {@link UserRealmDto} containing the details of the created realm resource.
    */
   // package protected
   UserRealmDto createRealmResource(UserRealmDto userRealm) {
     return RestAssured.given()
-        .basePath(UserApiService.CREATE_REALM_URL_PATH)
-        .contentType(ContentType.APPLICATION_XML.getMimeType())
-        .body(userRealm)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_CREATED)
-        .body(not(isEmptyOrNullString()))
-        .extract().body().as(UserRealmDto.class);
+      .basePath(UserRealmApiConstants.CREATE_REALM_URL_PATH)
+      .contentType(ContentType.APPLICATION_XML.getMimeType())
+      .body(userRealm)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_CREATED)
+      .body(not(isEmptyOrNullString()))
+      .extract().body().as(UserRealmDto.class);
   }
 
   /**
    * Invokes a Delete Realm API call to the User service to delete an identified realm resource, and asserts the call
    * was successful.
-   * 
+   *
    * @param realmId The ID of the realm to delete.
    */
   // package protected
   void deleteRealmResource(int realmId) {
     RestAssured.given()
-        .basePath("")
-        .pathParam("realmId", realmId)
-        .when()
-        .delete("/realm/{realmId}")
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_NO_CONTENT);
+      .basePath("")
+      .pathParam("realmId", realmId)
+      .when()
+      .delete("/realm/{realmId}")
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_NO_CONTENT);
   }
 
   /**
    * Tears down a realm created as part of a test. Deletes the realm. If the deletion fails for any reason, logs an
    * error and continues.
-   * 
+   *
    * @param realm The {@link UserRealmDto} to be deleted. Must include the ID of the realm, which must be an integer
-   * string.
+   *              string.
    */
   // package protected
   void tearDownCreatedRealm(UserRealmDto realm) {
@@ -165,18 +184,18 @@ public abstract class AbstractRealmApiTest {
   /**
    * @return A valid, unique realm name.
    */
-  protected static String generateUniqueRealmName() {
+  static String generateUniqueRealmName() {
     return "realm-" + UUID.randomUUID();
   }
 
   /**
    * @return A valid realm description.
    */
-  protected static String generateRealmDescription() {
+  static String generateRealmDescription() {
     return generateRandomAlphabeticString(UserRealmConstants.DESCRIPTION_MAX_LEN);
   }
 
-  protected static String generateRandomAlphabeticString(int length) {
+  static String generateRandomAlphabeticString(int length) {
     return RandomStringUtils.randomAlphabetic(length);
   }
 

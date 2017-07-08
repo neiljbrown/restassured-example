@@ -3,6 +3,7 @@
 // *********************************************************************************************************************
 apply plugin: 'java'
 apply plugin: 'eclipse'
+apply plugin: 'idea'
 
 // *********************************************************************************************************************
 // Project Properties
@@ -38,6 +39,7 @@ dependencies {
   testCompile('org.assertj:assertj-core:3.5.2')
   testCompile('org.slf4j:slf4j-api:1.7.21')
   testCompile('ch.qos.logback:logback-classic:1.1.7')
+  testCompile('com.github.tomakehurst:wiremock:2.6.0')
 }
 
 eclipse {

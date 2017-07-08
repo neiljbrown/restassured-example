@@ -16,12 +16,12 @@
 package com.neiljbrown.service.user;
 
 /**
- * A set of reusable constants relating to a User Realm.
+ * Constants relating to the User Realm APIs under test.
  */
-// package protected
-final class UserRealmConstants {
-  static final int ID_MIN = 1;
-  static final int ID_MAX = 9999;
-  static final int NAME_MAX_LEN = 100;
-  static final int DESCRIPTION_MAX_LEN = 255;
+public class UserRealmApiConstants {
+  private static final String CONTEXT_URL_PATH = "/user";
+  private static final String REALM_RESOURCE_URL_PATH = CONTEXT_URL_PATH + "/realm";
+  static final String CREATE_REALM_URL_PATH = REALM_RESOURCE_URL_PATH;
+  static final String REALM_ID_PATH_VAR_NAME = "realmId";
+  static final String GET_REALM_URL_PATH = REALM_RESOURCE_URL_PATH + "/{" + REALM_ID_PATH_VAR_NAME + "}";
 }

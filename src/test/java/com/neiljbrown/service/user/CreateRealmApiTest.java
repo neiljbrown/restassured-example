@@ -28,6 +28,7 @@ import io.restassured.specification.RequestSpecification;
 import org.apache.http.HttpStatus;
 import org.apache.http.entity.ContentType;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,8 +42,17 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
 
   private static final Logger logger = LoggerFactory.getLogger(CreateRealmApiTest.class);
 
-  /** List of one or more relams created by a test. Supports deleting realms as part of tearing down tests. */
+  /**
+   * List of one or more relams created by a test. Supports deleting realms as part of tearing down tests.
+   */
   private List<UserRealmDto> createdRealms = new ArrayList<>();
+
+  @Override
+  @Before
+  public void setUp() throws Exception {
+    super.setUp();
+    RestAssured.basePath = UserRealmApiConstants.CREATE_REALM_URL_PATH;
+  }
 
   @After
   public void tearDown() {
@@ -55,9 +65,9 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void whenUnsupportedHttpMethodGet() {
     RestAssured.when()
-        .get()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
+      .get()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
   }
 
   /**
@@ -66,10 +76,10 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void givenUnsupportedMediaTypeJson() {
     RestAssured.given().contentType(ContentType.APPLICATION_JSON.getMimeType())
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).body(isEmptyOrNullString());
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).body(isEmptyOrNullString());
   }
 
   /**
@@ -79,21 +89,21 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   public void givenUserRealmEmpty() {
     UserRealmDto requestedUserRealm = new UserRealmDto(null);
     RestAssured.given()
-        .body(requestedUserRealm)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            // Uses Groovy's GPath expression language to match and extract XML elements
-            "error.code", equalTo("MissingRealmName"),
-            "error.message", equalTo("Realm name is mandatory and must be supplied."));
+      .body(requestedUserRealm)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        // Uses Groovy's GPath expression language to match and extract XML elements
+        "error.code", equalTo("MissingRealmName"),
+        "error.message", equalTo("Realm name is mandatory and must be supplied."));
   }
 
   /**
    * Tests the case when the posted realm resource has a blank (non-empty, whitespace) name.
    * <p>
-   * BUG - API call fails with respinse status code of HTTP 500 instead of expected HTTP 400. 
+   * BUG - API call fails with respinse status code of HTTP 500 instead of expected HTTP 400.
    */
   @Test
   public void givenUserRealmWithBlankName() {
@@ -101,14 +111,14 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     UserRealmDto requestedUserRealm = new UserRealmDto(realmName);
 
     RestAssured.given()
-        .body(requestedUserRealm)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            "error.code", equalTo("MissingRealName"),
-            "error.message", equalTo("Realm name is mandatory and must be supplied."));
+      .body(requestedUserRealm)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        "error.code", equalTo("MissingRealName"),
+        "error.message", equalTo("Realm name is mandatory and must be supplied."));
   }
 
   /**
@@ -117,18 +127,18 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void givenUserRealmWithNameLongerThanMax() {
     UserRealmDto requestedUserRealm =
-        new UserRealmDto(generateRandomAlphabeticString(UserRealmConstants.NAME_MAX_LEN + 1));
+      new UserRealmDto(generateRandomAlphabeticString(UserRealmConstants.NAME_MAX_LEN + 1));
 
     RestAssured.given()
-        .body(requestedUserRealm)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            "error.code", equalTo("InvalidRealmName"),
-            "error.message",
-            equalTo("Realm name should not be longer than " + UserRealmConstants.NAME_MAX_LEN + " chars."));
+      .body(requestedUserRealm)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        "error.code", equalTo("InvalidRealmName"),
+        "error.message",
+        equalTo("Realm name should not be longer than " + UserRealmConstants.NAME_MAX_LEN + " chars."));
   }
 
   /**
@@ -139,19 +149,19 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void givenUserRealmWithDescriptionLongerThanMax() {
     UserRealmDto requestedUserRealm = new UserRealmDto(generateUniqueRealmName(),
-        generateRandomAlphabeticString(UserRealmConstants.DESCRIPTION_MAX_LEN + 1));
+      generateRandomAlphabeticString(UserRealmConstants.DESCRIPTION_MAX_LEN + 1));
 
     RestAssured.given()
-        .body(requestedUserRealm)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            "error.code",
-            equalTo("InvalidRealmDescription"),
-            "error.message",
-            equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
+      .body(requestedUserRealm)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        "error.code",
+        equalTo("InvalidRealmDescription"),
+        "error.message",
+        equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
   }
 
   /**
@@ -166,14 +176,14 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     assertCreatedRealm(createdRealm, requestedUserRealm);
 
     RestAssured.given()
-        .body(requestedUserRealm)
-        .when()
-        .post()
-        .then()
-        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-        .body(
-            "error.code", equalTo("DuplicateRealmName"),
-            "error.message", equalTo("Duplicate realm name [" + requestedUserRealm.getName() + "]."));
+      .body(requestedUserRealm)
+      .when()
+      .post()
+      .then()
+      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+      .body(
+        "error.code", equalTo("DuplicateRealmName"),
+        "error.message", equalTo("Duplicate realm name [" + requestedUserRealm.getName() + "]."));
   }
 
   /**
@@ -205,7 +215,7 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    * Factored-out common logic for executing a test of the Create Realm API in the success case, when a realm is
    * expected to be created. Executes the API call to create the supplied realm, asserts the response code indicates
    * success, and that body contains a created realm.
-   * 
+   *
    * @param userRealm Details of the {@link UserRealmDto realm} to be created.
    * @return The created realm, returned by the API, supporting further assertions to be applied.
    */
@@ -218,10 +228,10 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   /**
    * Asserts that a newly created realm returned by the Create Realm API contains a valid realm ID and key, and that the
    * other fields of the realm, such as the name and description, match those supplied in the expected realm.
-   * 
-   * @param createdRealm The created {@link UserRealmDto realm}.
+   *
+   * @param createdRealm  The created {@link UserRealmDto realm}.
    * @param expectedRealm A {@link UserRealmDto realm} containing the fields that the {@code createdRealm} should match.
-   * Null fields are excluded.
+   *                      Null fields are excluded.
    */
   private void assertCreatedRealm(UserRealmDto createdRealm, UserRealmDto expectedRealm) {
     assertRealmIdIsValid(createdRealm.getId());
@@ -235,16 +245,6 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
 
   private void assertRealmKeyIsValid(String realmKey) {
     assertThat(realmKey).matches("^[a-fA-F0-9]{32}$");
-  }
-
-  /**
-   * {@inheritDoc}
-   * <p>
-   * Returns the API base path for the Create Realm APi.
-   */
-  @Override
-  protected String getApiUrlPath() {
-    return UserApiService.CREATE_REALM_URL_PATH;
   }
 
   /**
