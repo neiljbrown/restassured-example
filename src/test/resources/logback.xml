@@ -1,0 +1,21 @@
+<!--
+ * *********************************************************************************************************************
+ * Configuration of the logback logging framework for tests.
+ * For help with configuration syntax see the logback manual - http://logback.qos.ch/manual/configuration.html
+ * Formatting characters used in patterns are documented in http://logback.qos.ch/manual/layouts.html
+ * *********************************************************************************************************************
+-->
+<configuration scan="false" scanPeriod="10 seconds" debug="false">
+
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%date{ISO8601} [%thread %X] %-5level %logger{36} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <!-- 'root' logger - Defines default log-level and appender used for all classes unless overridden by child logger.-->
+    <!-- By default, log all messages, for all classes, at INFO and above to STDOUT (application's console). -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>
