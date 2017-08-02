@@ -15,6 +15,8 @@
  */
 package com.neiljbrown.service.user;
 
+import static com.github.tomakehurst.wiremock.client.WireMock.*;
+import static com.github.tomakehurst.wiremock.stubbing.Scenario.STARTED;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.isEmptyOrNullString;
@@ -22,6 +24,12 @@ import static org.hamcrest.Matchers.isEmptyOrNullString;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.github.tomakehurst.wiremock.client.WireMock;
+import com.github.tomakehurst.wiremock.extension.Parameters;
+import com.github.tomakehurst.wiremock.http.Request;
+import com.github.tomakehurst.wiremock.http.RequestMethod;
+import com.github.tomakehurst.wiremock.matching.MatchResult;
+import com.github.tomakehurst.wiremock.matching.RequestMatcherExtension;
 import io.restassured.RestAssured;
 import io.restassured.specification.RequestSpecification;
 
@@ -43,15 +51,15 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   private static final Logger logger = LoggerFactory.getLogger(CreateRealmApiTest.class);
 
   /**
-   * List of one or more relams created by a test. Supports deleting realms as part of tearing down tests.
+   * List of one or more realms created by a test. Supports deleting realms as part of tearing down tests.
    */
   private List<UserRealmDto> createdRealms = new ArrayList<>();
 
   @Override
   @Before
   public void setUp() throws Exception {
-    super.setUp();
     RestAssured.basePath = UserRealmApiConstants.CREATE_REALM_URL_PATH;
+    super.setUp();
   }
 
   @After
@@ -64,6 +72,8 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    */
   @Test
   public void whenUnsupportedHttpMethodGet() {
+    stubCreateRealmWhenUnsupportedHttpMethod();
+
     RestAssured.when()
       .get()
       .then()
@@ -75,6 +85,8 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    */
   @Test
   public void givenUnsupportedMediaTypeJson() {
+    stubCreateRealmWhenUnsupportedMediaType();
+
     RestAssured.given().contentType(ContentType.APPLICATION_JSON.getMimeType())
       .when()
       .post()
@@ -87,7 +99,9 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    */
   @Test
   public void givenUserRealmEmpty() {
-    UserRealmDto requestedUserRealm = new UserRealmDto(null);
+    stubCreateRealmWhenInvalidRealmNameMissingOrEmpty();
+
+    UserRealmDto requestedUserRealm = new UserRealmDto((String) null);
     RestAssured.given()
       .body(requestedUserRealm)
       .when()
@@ -102,11 +116,11 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
 
   /**
    * Tests the case when the posted realm resource has a blank (non-empty, whitespace) name.
-   * <p>
-   * BUG - API call fails with respinse status code of HTTP 500 instead of expected HTTP 400.
    */
   @Test
   public void givenUserRealmWithBlankName() {
+    stubCreateRealmWhenInvalidRealmNameMissingOrEmpty();
+
     final String realmName = " ";
     UserRealmDto requestedUserRealm = new UserRealmDto(realmName);
 
@@ -117,7 +131,7 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
       .then()
       .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
       .body(
-        "error.code", equalTo("MissingRealName"),
+        "error.code", equalTo("MissingRealmName"),
         "error.message", equalTo("Realm name is mandatory and must be supplied."));
   }
 
@@ -126,6 +140,8 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    */
   @Test
   public void givenUserRealmWithNameLongerThanMax() {
+    stubCreateRealmWhenInvalidRealmNameLength();
+
     UserRealmDto requestedUserRealm =
       new UserRealmDto(generateRandomAlphabeticString(UserRealmConstants.NAME_MAX_LEN + 1));
 
@@ -143,11 +159,11 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
 
   /**
    * Tests the case when the posted realm resource has a description longer than the specified max.
-   * <p>
-   * BUG - API call fails with respinse status code of HTTP 500 instead of expected HTTP 400.
    */
   @Test
   public void givenUserRealmWithDescriptionLongerThanMax() {
+    stubCreateRealmWhenInvalidRealmDescriptionLength();
+
     UserRealmDto requestedUserRealm = new UserRealmDto(generateUniqueRealmName(),
       generateRandomAlphabeticString(UserRealmConstants.DESCRIPTION_MAX_LEN + 1));
 
@@ -164,6 +180,7 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
         equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
   }
 
+
   /**
    * Tests the case when the posted realm resource has a non-unique name - another realm with the same name already
    * exists.
@@ -171,6 +188,8 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   @Test
   public void givenUserRealmWithDuplicateName() {
     UserRealmDto requestedUserRealm = new UserRealmDto(generateUniqueRealmName(), generateRealmDescription());
+
+    stubCreateRealmWhenDuplicateRealmName(requestedUserRealm.getName(), requestedUserRealm.getDescription());
 
     UserRealmDto createdRealm = doTestCreateRealmSuccess(requestedUserRealm);
     assertCreatedRealm(createdRealm, requestedUserRealm);
@@ -186,6 +205,7 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
         "error.message", equalTo("Duplicate realm name [" + requestedUserRealm.getName() + "]."));
   }
 
+
   /**
    * Tests the case when the posted realm resource contains only a unique (mandatory) name field.
    */
@@ -193,10 +213,12 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   public void givenUserRealmWithNameOnly() {
     UserRealmDto requestedUserRealm = new UserRealmDto(generateUniqueRealmName());
 
+    stubCreateRealmSuccessForRealm(requestedUserRealm, 123, generateRealmKey());
     UserRealmDto createdRealm = doTestCreateRealmSuccess(requestedUserRealm);
 
     assertCreatedRealm(createdRealm, requestedUserRealm);
   }
+
 
   /**
    * Tests the case when the posted realm resource contains both the mandatory (unique) name and the optional
@@ -206,6 +228,7 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   public void givenUserRealmWithNameAndDescription() {
     UserRealmDto requestedUserRealm = new UserRealmDto(generateUniqueRealmName(), generateRealmDescription());
 
+    stubCreateRealmSuccessForRealm(requestedUserRealm, 123, generateRealmKey());
     UserRealmDto createdRealm = doTestCreateRealmSuccess(requestedUserRealm);
 
     assertCreatedRealm(createdRealm, requestedUserRealm);
@@ -265,5 +288,121 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     RequestSpecification defaultRequestSpec = super.createDefaultRequestSpecification();
     defaultRequestSpec.contentType(ContentType.APPLICATION_XML.getMimeType());
     return defaultRequestSpec;
+  }
+
+  // -------------------------------------------------------------------------------------------------------------------
+  // Methods which stub-out the APIs under test using WireMock, avoiding dependency on real implementation of the APIs
+  // -------------------------------------------------------------------------------------------------------------------
+
+  /**
+   * Registers a stubbed HTTP response that should be returned if a Create Realm API request is made using an invalid
+   * HTTP method - any method except POST.
+   */
+  private void stubCreateRealmWhenUnsupportedHttpMethod() {
+    // Instead of registering the same stub for every HTTP method which isn't supported (e.g. HTTP GET as commented
+    // out below), register a single stub for all HTTP methods except POST. WireMock doesn't provide such a request
+    // matcher out of the box, so use a custom request matcher.
+    // See http://wiremock.org/docs/extending-wiremock/#custom-request-matchers
+    /*
+    WireMock.stubFor(
+      get(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .willReturn(
+          aResponse().withStatus(HttpStatus.SC_METHOD_NOT_ALLOWED).withHeader("Allow", "POST")));
+    */
+    this.wireMockRule.stubFor(requestMatching(
+      new RequestMatcherExtension() {
+        @Override
+        public MatchResult match(Request request, Parameters parameters) {
+          return MatchResult.of(request.getUrl().equals(UserRealmApiConstants.CREATE_REALM_URL_PATH) &&
+            request.getMethod() != RequestMethod.POST);
+        }
+      }
+    ).willReturn(
+      aResponse().withStatus(HttpStatus.SC_METHOD_NOT_ALLOWED).withHeader("Allow", "POST")));
+  }
+
+  private void stubCreateRealmWhenUnsupportedMediaType() {
+    WireMock.stubFor(
+      any(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .withHeader("Content-Type", WireMock.notMatching(ContentType.APPLICATION_XML.getMimeType()))
+        .willReturn(
+          aResponse().withStatus(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).withHeader("Accept", ContentType
+            .APPLICATION_XML.getMimeType())));
+  }
+
+  private void stubCreateRealmWhenInvalidRealmNameMissingOrEmpty() {
+    WireMock.stubFor(
+      post(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .withHeader("Content-Type", WireMock.containing(ContentType.APPLICATION_XML.getMimeType()))
+        .withRequestBody(matchingXPath("/realm[string-length(normalize-space(@name)) = 0]"))
+        .willReturn(
+          aResponse()
+            .withStatus(HttpStatus.SC_BAD_REQUEST)
+            .withHeader("Content-Type", "application/xml")
+            .withBody("<error><code>MissingRealmName</code><message>Realm name is mandatory and must be supplied" +
+              ".</message></error>")));
+  }
+
+  private void stubCreateRealmWhenInvalidRealmNameLength() {
+    WireMock.stubFor(
+      post(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .withHeader("Content-Type", WireMock.containing(ContentType.APPLICATION_XML.getMimeType()))
+        .withRequestBody(matchingXPath("/realm[string-length(@name) >" + UserRealmConstants.NAME_MAX_LEN + "]"))
+        .willReturn(
+          aResponse()
+            .withStatus(HttpStatus.SC_BAD_REQUEST)
+            .withHeader("Content-Type", "application/xml")
+            .withBody("<error><code>InvalidRealmName</code><message>Realm name should not be longer than " +
+              UserRealmConstants.NAME_MAX_LEN + " chars.</message></error>")));
+  }
+
+  private void stubCreateRealmWhenInvalidRealmDescriptionLength() {
+    WireMock.stubFor(
+      post(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .withHeader("Content-Type", WireMock.containing(ContentType.APPLICATION_XML.getMimeType()))
+        .withRequestBody(matchingXPath("/realm[string-length(description) > " + UserRealmConstants
+          .DESCRIPTION_MAX_LEN + "]"))
+        .willReturn(
+          aResponse()
+            .withStatus(HttpStatus.SC_BAD_REQUEST)
+            .withHeader("Content-Type", "application/xml")
+            .withBody("<error><code>InvalidRealmDescription</code><message>Realm description should not be longer " +
+              "than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars.</message></error>")));
+  }
+
+  private void stubCreateRealmWhenDuplicateRealmName(String realmName, String realmDescription) {
+    final String stubScenarioName = "duplicateRealmName";
+    final String stubScenarioUpdatedState = "realmCreated";
+    WireMock.stubFor(
+      post(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .inScenario(stubScenarioName)
+        .whenScenarioStateIs(STARTED)
+        .withHeader("Content-Type", WireMock.containing(ContentType.APPLICATION_XML.getMimeType()))
+        .withRequestBody(matchingXPath("/realm[string-length(@name) <=" + UserRealmConstants.NAME_MAX_LEN + "]"))
+        .withRequestBody(matchingXPath("/realm[@name='" + realmName + "']"))
+        .willReturn(
+          aResponse()
+            .withStatus(HttpStatus.SC_CREATED)
+            .withHeader("Content-Type", "application/xml")
+            .withBody("<realm id='123' name='" + realmName +
+              "'><key>12345678901234567890123456789012</key><description>" + realmDescription +
+              "</description></realm>"))
+        .willSetStateTo(stubScenarioUpdatedState));
+
+    WireMock.stubFor(
+      post(urlEqualTo(UserRealmApiConstants.CREATE_REALM_URL_PATH))
+        .inScenario(stubScenarioName)
+        .whenScenarioStateIs(stubScenarioUpdatedState)
+        .withHeader("Content-Type", WireMock.containing(ContentType.APPLICATION_XML.getMimeType()))
+        .withRequestBody(matchingXPath("/realm[string-length(@name) <=" + UserRealmConstants.NAME_MAX_LEN + "]"))
+        .withRequestBody(matchingXPath("/realm[@name='" + realmName + "']"))
+        .willReturn(
+          aResponse()
+            .withStatus(HttpStatus.SC_BAD_REQUEST)
+            .withHeader("Content-Type", "application/xml")
+            .withBody("<error><code>DuplicateRealmName</code><message>Duplicate realm name [" + realmName + "]" +
+              ".</message></error>")));
+
+    stubDeleteRealmSuccess();
   }
 }

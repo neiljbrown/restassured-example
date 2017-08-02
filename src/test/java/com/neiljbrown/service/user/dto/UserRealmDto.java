@@ -70,6 +70,18 @@ public final class UserRealmDto {
   }
 
   /**
+   * Copy constructor.
+   *
+   * @param userRealmDto The instance of {@link UserRealmDto} to be copied.
+   */
+  public UserRealmDto(UserRealmDto userRealmDto) {
+    this.id = userRealmDto.getId();
+    this.name = userRealmDto.getName();
+    this.description = userRealmDto.getDescription();
+    this.key = userRealmDto.getKey();
+  }
+
+  /**
    * @return the id
    */
   @XmlAttribute
