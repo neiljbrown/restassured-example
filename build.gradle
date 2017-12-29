@@ -1,3 +1,19 @@
+/*
+ * Copyright 2017-present the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 // *********************************************************************************************************************
 // Enable plugins
 // *********************************************************************************************************************
@@ -10,7 +26,7 @@ apply plugin: 'idea'
 // *********************************************************************************************************************
 // Standard project properties. These are used as default values by some assembly and release task, e.g. jar
  
-//project.name - Property defined in settings.gradle, overridding the default used by Gradle which is based on proj dir
+//project.name - Property defined in settings.gradle, overriding the default used by Gradle which is based on proj dir
 project.group = 'com.neiljbrown.examples'
 project.description = 'An example of how to use the REST Assured library to implement black-box, functional tests for REST APIs.'
 project.version = 1.0

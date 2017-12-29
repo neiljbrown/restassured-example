@@ -20,8 +20,8 @@ import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.XmlRootElement;
 
 /**
- * Data Transfer Object (DTO) for a User Realm resource. Deserialised, object representation of representations of the
- * resource exchanged in remote API calls.
+ * Data Transfer Object (DTO) for a User Realm API resource. Deserialised, object representation of representations of
+ * the resource exchanged in remote API calls.
  * <p>
  * Provides support for data-binding (automated marshalling and unmarshalling) of representations to this object using
  * JAXB (annotations).
@@ -41,15 +41,15 @@ public final class UserRealmDto {
   }
 
   /**
-   * @param name
+   * @param name the name of the realm.
    */
   public UserRealmDto(String name) {
     this.name = name;
   }
 
   /**
-   * @param name
-   * @param description
+   * @param name the name of the realm.
+   * @param description the description of the realm.
    */
   public UserRealmDto(String name, String description) {
     this.name = name;
@@ -57,10 +57,10 @@ public final class UserRealmDto {
   }
 
   /**
-   * @param id
-   * @param name
-   * @param description
-   * @param key
+   * @param id the unique ID of the realm.
+   * @param name the name of the realm.
+   * @param description the description of the realm.
+   * @param key the realm's encryption key.
    */
   public UserRealmDto(String id, String name, String description, String key) {
     this.id = id;
@@ -205,21 +205,13 @@ public final class UserRealmDto {
     return true;
   }
 
-  /**
-   * {@inheritDoc}
-   */
   @Override
   public String toString() {
-    StringBuilder builder = new StringBuilder();
-    builder.append("UserRealmDto [id=");
-    builder.append(id);
-    builder.append(", name=");
-    builder.append(name);
-    builder.append(", description=");
-    builder.append(description);
-    builder.append(", key=");
-    builder.append(key);
-    builder.append("]");
-    return builder.toString();
+    return "UserRealmDto{" +
+      "id='" + id + '\'' +
+      ", name='" + name + '\'' +
+      ", description='" + description + '\'' +
+      ", key='" + key + '\'' +
+      '}';
   }
 }

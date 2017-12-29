@@ -48,7 +48,7 @@ import org.slf4j.LoggerFactory;
  * <p>
  * To make this example set of tests easy to run the API under test has been stubbed-out (using WireMock), rather
  * than depend on a real API service being deployed and running. When reviewing the use of REST-assured in the
- * test methods, ignore any references to stubbed methods (and WireMock).
+ * test methods you can ignore any references to stubbed methods (and WireMock).
  */
 public class GetRealmApiTest extends AbstractRealmApiTest {
 

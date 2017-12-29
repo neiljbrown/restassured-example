@@ -5,8 +5,8 @@ This project provides an example of how to use the [REST-assured](http://rest-as
 functional tests for REST APIs in Java.
 
 REST-assured is a Java library that aims to make it simpler to write out-of-process, functional tests for REST APIs, 
-that are written in Java (or other JVM languages). It runs on top of existing Java testing frameworks (JUnit or 
-NUnit), and includes a DSL for building API requests and asserting API responses.
+that are written in Java (or other JVM languages). It runs on top of existing Java testing frameworks (JUnit), and 
+includes a DSL for building API requests and asserting API responses.
    
 In this example project, REST-assured is used to implement a suite of functional tests for a couple of REST APIs 
 hosted by an imaginary User service that supports creating and retrieving a resource/entity known as a (user) 'realm', 
@@ -39,6 +39,33 @@ Open the project in your IDE and run the tests contained in one of the aforement
 JUnit test. 
 
 To compile and run the tests from the command line enter the command ``./gradlew test`` 
+
+##Debugging the Examples
+You can debug execution of the tests from within your IDE by setting breakpoints as you would with any other JUnit test.
+
+The example tests also support logging of the HTTP requests and responses which they make to the console, using 
+REST-assured's underlying logging support. By default only failed requests and responses are logged (which is also the
+REST-assured default). You can additionally enable logging of successful requests and responses by setting the Java 
+system property 'qatest.alwaysLogReqAndResp' to 'true', e.g. java ... -Dqatest.alwaysLogReqAndResp=true. 
+
+An example of an HTTP request and response logged by REST-assured is shown below -   
+```
+Request method:	POST
+Request URI:	http://localhost:52650/user/realm
+Proxy:          <none>
+Request params:	<none>
+Query params:	<none>
+Form params:	<none>
+Path params:	<none>
+Headers:        Accept=application/xml
+                Content-Type=application/xml; charset=ISO-8859-1
+Cookies:        <none>
+Multiparts:     <none>
+Body:
+<realm name="realm-0be9c302-69e8-4e49-9fae-72d9e119bb1e">
+  <description>iNuZRnYHQNvGIgxKnnBmfLbzuPvuRlpdIilHhFxmpKAKCaUMBlkYQePxcHJkfcEFqwhFyWcXLnWEDMUMTHXhBEzHyyIdipHceXhovqarMpPZUGCcpCKtGDRmJLckMuHmHYbNOCzdAAzvuLsBxucrmMnLFWbDvwsyZFNlEkzZRzBVJFUunXkDIjPnwoPlKceuOjwMsLOUPXdbKwQWmKoTIxXqTadTkEyxhfkATjsQkfElnPSZVwKSfXRfDyWaogUQ</description>
+</realm>
+```
 
 ##API Specification
 This section contains the spec. of the couple of APIs for which the tests have been written.

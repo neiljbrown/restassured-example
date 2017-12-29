@@ -48,7 +48,7 @@ import com.neiljbrown.service.user.dto.UserRealmDto;
  * <p>
  * To make this example set of tests easy to run the API under test has been stubbed-out (using WireMock), rather
  * than depend on a real API service being deployed and running. When reviewing the use of REST-assured in the
- * test methods, ignore any references to stubbed methods (and WireMock).
+ * test methods you can ignore any references to stubbed methods (and WireMock).
  */
 public class CreateRealmApiTest extends AbstractRealmApiTest {
 
@@ -157,8 +157,7 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
       .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
       .body(
         "error.code", equalTo("InvalidRealmName"),
-        "error.message",
-        equalTo("Realm name should not be longer than " + UserRealmConstants.NAME_MAX_LEN + " chars."));
+        "error.message", equalTo("Realm name should not be longer than " + UserRealmConstants.NAME_MAX_LEN + " chars."));
   }
 
   /**
@@ -178,12 +177,10 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
       .then()
       .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
       .body(
-        "error.code",
-        equalTo("InvalidRealmDescription"),
+        "error.code", equalTo("InvalidRealmDescription"),
         "error.message",
-        equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
+          equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
   }
-
 
   /**
    * Tests the case when the posted realm resource has a non-unique name - another realm with the same name already
@@ -208,7 +205,6 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
         "error.code", equalTo("DuplicateRealmName"),
         "error.message", equalTo("Duplicate realm name [" + requestedUserRealm.getName() + "]."));
   }
-
 
   /**
    * Tests the case when the posted realm resource contains only a unique (mandatory) name field.
@@ -257,8 +253,8 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    * other fields of the realm, such as the name and description, match those supplied in the expected realm.
    *
    * @param createdRealm  The created {@link UserRealmDto realm}.
-   * @param expectedRealm A {@link UserRealmDto realm} containing the fields that the {@code createdRealm} should match.
-   *                      Null fields are excluded.
+   * @param expectedRealm A {@link UserRealmDto realm} containing the fields that the {@code createdRealm} should
+   * match. Null fields are excluded.
    */
   private void assertCreatedRealm(UserRealmDto createdRealm, UserRealmDto expectedRealm) {
     assertRealmIdIsValid(createdRealm.getId());

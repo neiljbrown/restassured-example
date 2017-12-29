@@ -18,7 +18,7 @@ package com.neiljbrown.service.user;
 /**
  * A set of reusable constants relating to a User Realm.
  */
-// package protected
+// package-protected
 final class UserRealmConstants {
   static final int ID_MIN = 1;
   static final int ID_MAX = 9999;

@@ -18,9 +18,10 @@ package com.neiljbrown.service.user;
 /**
  * Constants relating to the User Realm APIs under test.
  */
-public class UserRealmApiConstants {
+// Package-protected
+final class UserRealmApiConstants {
   private static final String CONTEXT_URL_PATH = "/user";
-  static final String REALM_RESOURCE_URL_PATH = CONTEXT_URL_PATH + "/realm";
+  private static final String REALM_RESOURCE_URL_PATH = CONTEXT_URL_PATH + "/realm";
   static final String CREATE_REALM_URL_PATH = REALM_RESOURCE_URL_PATH;
   static final String REALM_ID_PATH_VAR_NAME = "realmId";
   static final String GET_REALM_URL_PATH = REALM_RESOURCE_URL_PATH + "/{" + REALM_ID_PATH_VAR_NAME + "}";

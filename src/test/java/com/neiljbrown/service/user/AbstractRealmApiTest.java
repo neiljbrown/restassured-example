@@ -43,7 +43,6 @@ import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMoc
 import static org.hamcrest.Matchers.isEmptyOrNullString;
 import static org.hamcrest.Matchers.not;
 
-
 /**
  * Abstract base class providing common behaviour and state for functional tests of Realm APIs.
  */
@@ -56,7 +55,7 @@ public abstract class AbstractRealmApiTest {
    * Automate the startup and shutdown of the WireMock mock HTTP server before and after the execution of each test to
    * support stubbing HTTP response and verifying HTTP requests.
    * <p>
-   * Configure WireMock to pick a random free HTTP(S) port, rather than the default of always listening on 8080, which
+   * Configures WireMock to pick a random free HTTP(S) port, rather than the default of always listening on 8080, which
    * may be in use. The utilised port can subsequently be discovered using wireMockRule.port() and httpsPort().
    */
   @Rule
@@ -80,6 +79,11 @@ public abstract class AbstractRealmApiTest {
     WireMock.reset();
   }
 
+  /**
+   * @return The Logger for this class.
+   */
+  protected abstract Logger getLogger();
+
   private void configureRestAssuredRequestAndResponseDefaults() {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
     configureRestAssuredRequestDefaults();
@@ -98,10 +102,17 @@ public abstract class AbstractRealmApiTest {
     // for every test method, once, and once set RestAssured doesn't provide an easy way to query it or append to it.
   }
 
-  /**
-   * @return The Logger for this class.
-   */
-  protected abstract Logger getLogger();
+  private void configureRestAssuredResponseDefaults() {
+    if (this.isAlwaysLogRequestAndResponse()) {
+      // RestAssurred doesn't currently support enabling logging using a ResponseSpecification as follows -
+      //   ResponseSpecification defaultResponseSpecification = new ResponseSpecBuilder().build().log().all();
+      //   RestAssured.responseSpecification = defaultResponseSpecification;
+      // It throws an IllegalStatException with the message
+      //   "Cannot configure logging since request specification is not defined. You may be misusing the API"
+      // So, instead, enable response logging by adding a filter to the default list of filters.
+      RestAssured.filters(new ResponseLoggingFilter());
+    }
+  }
 
   /**
    * Create and configure a default RequestSpecification which ensures that by default all requests have the typically
@@ -117,18 +128,6 @@ public abstract class AbstractRealmApiTest {
       defaultRequestSpec.log().all();
     }
     return defaultRequestSpec;
-  }
-
-  private void configureRestAssuredResponseDefaults() {
-    if (this.isAlwaysLogRequestAndResponse()) {
-      // RestAssurred doesn't currently support enabling logging using a ResponseSpecification as follows -
-      // ResponseSpecification defaultResponseSpecification = new ResponseSpecBuilder().build().log().all();
-      // RestAssured.responseSpecification = defaultResponseSpecification;
-      // It throws an IllegalStatException with the message
-      // "Cannot configure logging since request specification is not defined. You may be misusing the API"
-      // So, instead, enable response logging by adding a filter to the default list of filters.
-      RestAssured.filters(new ResponseLoggingFilter());
-    }
   }
 
   /**
@@ -174,7 +173,7 @@ public abstract class AbstractRealmApiTest {
    * error and continues.
    *
    * @param realm The {@link UserRealmDto} to be deleted. Must include the ID of the realm, which must be an integer
-   *              string.
+   * string.
    */
   // package protected
   void tearDownCreatedRealm(UserRealmDto realm) {
@@ -184,6 +183,21 @@ public abstract class AbstractRealmApiTest {
       deleteRealmResource(Integer.parseInt(realm.getId()));
     } catch (Exception e) {
       this.getLogger().error("Error tearing down realm {}. Exception {}. Continuing...", realm, e.toString(), e);
+    }
+  }
+
+  /**
+   * @return {@code true} if HTTP requests and responses should always be logged, even if no assertions fail.
+   */
+  private boolean isAlwaysLogRequestAndResponse() {
+    return this.alwaysLogRequestAndResponse;
+  }
+
+  private void initAlwaysLogRequestAndResponse() {
+    this.alwaysLogRequestAndResponse = false;
+    String sysProp = System.getProperty(SYS_PROP_ALWAYS_LOG_REQ_AND_RESP);
+    if (sysProp != null) {
+      this.alwaysLogRequestAndResponse = Boolean.parseBoolean(sysProp.trim());
     }
   }
 
@@ -206,17 +220,28 @@ public abstract class AbstractRealmApiTest {
   }
 
   /**
-   * @return {@code true} if HTTP requests and responses should always be logged, even if no assertions fail.
+   * @return A valid realm key.
    */
-  private boolean isAlwaysLogRequestAndResponse() {
-    return this.alwaysLogRequestAndResponse;
+  static String generateRealmKey() {
+    return UUID.randomUUID().toString().replace("-", "");
   }
 
-  private void initAlwaysLogRequestAndResponse() {
-    this.alwaysLogRequestAndResponse = false;
-    String sysProp = System.getProperty(SYS_PROP_ALWAYS_LOG_REQ_AND_RESP);
-    if (sysProp != null) {
-      this.alwaysLogRequestAndResponse = Boolean.parseBoolean(sysProp.trim());
+  /**
+   * Utility method for serialising a {@link UserRealmDto} to an XML representation.
+   *
+   * @param userRealmDto the {@link UserRealmDto} to serialise.
+   * @return a string containing the XML representation.
+   */
+  static String serialiseUserRealmDtoToXml(UserRealmDto userRealmDto) {
+    try {
+      StringWriter writer = new StringWriter();
+      JAXBContext context = JAXBContext.newInstance(UserRealmDto.class);
+      Marshaller marshaller = context.createMarshaller();
+      marshaller.marshal(userRealmDto, writer);
+      return writer.toString();
+    } catch (JAXBException e) {
+      throw new RuntimeException("Error serialising UserRealmDto [" + userRealmDto + "]. Cause [" + e.toString() + "" +
+        ".", e);
     }
   }
 
@@ -240,11 +265,11 @@ public abstract class AbstractRealmApiTest {
    * realm to be created.
    *
    * @param requestedUserRealm a {@link UserRealmDto} containing the details of the realm to be created, as specified
-   *                           in the body of the Create Realm API request for which the response is being stubbed.
-   * @param realmId            the ID of the created realm to be returned in the stubbed response, as would be
-   *                           generated by the Create Realm API.
-   * @param realmKey           the key of the created realm to be returned in the stubbed response, as would be
-   *                           generated by the Create Realm API.
+   * in the body of the Create Realm API request for which the response is being stubbed.
+   * @param realmId the ID of the created realm to be returned in the stubbed response, as would be generated by the
+   * Create Realm API.
+   * @param realmKey the key of the created realm to be returned in the stubbed response, as would be generated by
+   * the Create Realm API.
    */
   void stubCreateRealmSuccessForRealm(UserRealmDto requestedUserRealm, int realmId, String realmKey) {
     Objects.requireNonNull(requestedUserRealm, "requestedUserRealm must not be null.");
@@ -272,31 +297,5 @@ public abstract class AbstractRealmApiTest {
             .withBody(requestedRealmAsXmlString)));
 
     stubDeleteRealmSuccess();
-  }
-
-  /**
-   * @return A valid realm key.
-   */
-  static String generateRealmKey() {
-    return UUID.randomUUID().toString().replace("-", "");
-  }
-
-  /**
-   * Utility method for serialising a {@link UserRealmDto} to an XML representation.
-   *
-   * @param userRealmDto the {@link UserRealmDto} to serialise.
-   * @return a string containing the XML representation.
-   */
-  static String serialiseUserRealmDtoToXml(UserRealmDto userRealmDto) {
-    try {
-      StringWriter writer = new StringWriter();
-      JAXBContext context = JAXBContext.newInstance(UserRealmDto.class);
-      Marshaller marshaller = context.createMarshaller();
-      marshaller.marshal(userRealmDto, writer);
-      return writer.toString();
-    } catch (JAXBException e) {
-      throw new RuntimeException("Error serialising UserRealmDto [" + userRealmDto + "]. Cause [" + e.toString() + "" +
-        ".", e);
-    }
   }
 }
