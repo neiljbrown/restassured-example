@@ -78,10 +78,11 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   public void whenUnsupportedHttpMethodGet() {
     stubCreateRealmWhenUnsupportedHttpMethod();
 
-    RestAssured.when()
-      .get()
+    RestAssured
+      .when()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
+        .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
   }
 
   /**
@@ -91,11 +92,13 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
   public void givenUnsupportedMediaTypeJson() {
     stubCreateRealmWhenUnsupportedMediaType();
 
-    RestAssured.given().contentType(ContentType.APPLICATION_JSON.getMimeType())
+    RestAssured
+      .given()
+        .contentType(ContentType.APPLICATION_JSON.getMimeType())
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).body(isEmptyOrNullString());
+        .assertThat().statusCode(HttpStatus.SC_UNSUPPORTED_MEDIA_TYPE).body(isEmptyOrNullString());
   }
 
   /**
@@ -106,16 +109,17 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     stubCreateRealmWhenInvalidRealmNameMissingOrEmpty();
 
     UserRealmDto requestedUserRealm = new UserRealmDto((String) null);
-    RestAssured.given()
-      .body(requestedUserRealm)
+    RestAssured
+      .given()
+        .body(requestedUserRealm)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        // Uses Groovy's GPath expression language to match and extract XML elements
-        "error.code", equalTo("MissingRealmName"),
-        "error.message", equalTo("Realm name is mandatory and must be supplied."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          // Uses Groovy's GPath expression language to match and extract XML elements
+          "error.code", equalTo("MissingRealmName"),
+          "error.message", equalTo("Realm name is mandatory and must be supplied."));
   }
 
   /**
@@ -128,15 +132,16 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     final String realmName = " ";
     UserRealmDto requestedUserRealm = new UserRealmDto(realmName);
 
-    RestAssured.given()
-      .body(requestedUserRealm)
+    RestAssured
+      .given()
+        .body(requestedUserRealm)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        "error.code", equalTo("MissingRealmName"),
-        "error.message", equalTo("Realm name is mandatory and must be supplied."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          "error.code", equalTo("MissingRealmName"),
+          "error.message", equalTo("Realm name is mandatory and must be supplied."));
   }
 
   /**
@@ -149,15 +154,16 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     UserRealmDto requestedUserRealm =
       new UserRealmDto(generateRandomAlphabeticString(UserRealmConstants.NAME_MAX_LEN + 1));
 
-    RestAssured.given()
-      .body(requestedUserRealm)
+    RestAssured
+      .given()
+        .body(requestedUserRealm)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        "error.code", equalTo("InvalidRealmName"),
-        "error.message", equalTo("Realm name should not be longer than " + UserRealmConstants.NAME_MAX_LEN + " chars."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          "error.code", equalTo("InvalidRealmName"),
+          "error.message", equalTo("Realm name should not be longer than " + UserRealmConstants.NAME_MAX_LEN + " chars."));
   }
 
   /**
@@ -170,16 +176,17 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     UserRealmDto requestedUserRealm = new UserRealmDto(generateUniqueRealmName(),
       generateRandomAlphabeticString(UserRealmConstants.DESCRIPTION_MAX_LEN + 1));
 
-    RestAssured.given()
-      .body(requestedUserRealm)
+    RestAssured
+      .given()
+        .body(requestedUserRealm)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        "error.code", equalTo("InvalidRealmDescription"),
-        "error.message",
-          equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          "error.code", equalTo("InvalidRealmDescription"),
+          "error.message",
+            equalTo("Realm description should not be longer than " + UserRealmConstants.DESCRIPTION_MAX_LEN + " chars."));
   }
 
   /**
@@ -195,15 +202,16 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
     UserRealmDto createdRealm = doTestCreateRealmSuccess(requestedUserRealm);
     assertCreatedRealm(createdRealm, requestedUserRealm);
 
-    RestAssured.given()
-      .body(requestedUserRealm)
+    RestAssured
+      .given()
+        .body(requestedUserRealm)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        "error.code", equalTo("DuplicateRealmName"),
-        "error.message", equalTo("Duplicate realm name [" + requestedUserRealm.getName() + "]."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          "error.code", equalTo("DuplicateRealmName"),
+          "error.message", equalTo("Duplicate realm name [" + requestedUserRealm.getName() + "]."));
   }
 
   /**
@@ -218,7 +226,6 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
 
     assertCreatedRealm(createdRealm, requestedUserRealm);
   }
-
 
   /**
    * Tests the case when the posted realm resource contains both the mandatory (unique) name and the optional
@@ -284,8 +291,8 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    * Additionally sets the Content-Type header for these class of tests.
    */
   @Override
-  protected RequestSpecification createDefaultRequestSpecification() {
-    RequestSpecification defaultRequestSpec = super.createDefaultRequestSpecification();
+  protected RequestSpecification createDefaultRequestSpecification(boolean alwaysLogRequestAndResponse) {
+    RequestSpecification defaultRequestSpec = super.createDefaultRequestSpecification(alwaysLogRequestAndResponse);
     defaultRequestSpec.contentType(ContentType.APPLICATION_XML.getMimeType());
     return defaultRequestSpec;
   }

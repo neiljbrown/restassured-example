@@ -61,17 +61,9 @@ public abstract class AbstractRealmApiTest {
   @Rule
   public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort().dynamicHttpsPort());
 
-  /**
-   * Flag controlling whether HTTP requests and response issued by tests are always logged. Intended to support
-   * debugging exact behaviour of tests, even when they pass. Defaults to false - requests and responses will only be
-   * logged if assertions fail. Can be set at runtime using system property {@link #SYS_PROP_ALWAYS_LOG_REQ_AND_RESP}.
-   */
-  private boolean alwaysLogRequestAndResponse;
-
   @Before
   public void setUp() throws Exception {
-    initAlwaysLogRequestAndResponse();
-    configureRestAssuredRequestAndResponseDefaults();
+    initRestAssured();
   }
 
   @After
@@ -84,47 +76,55 @@ public abstract class AbstractRealmApiTest {
    */
   protected abstract Logger getLogger();
 
-  private void configureRestAssuredRequestAndResponseDefaults() {
+  private void initRestAssured() {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-    configureRestAssuredRequestDefaults();
-    configureRestAssuredResponseDefaults();
+
+    boolean alwaysLogRequestAndResponse = false;
+    String sysProp = System.getProperty(SYS_PROP_ALWAYS_LOG_REQ_AND_RESP);
+    if (sysProp != null) {
+      alwaysLogRequestAndResponse = Boolean.parseBoolean(sysProp.trim());
+    }
+
+    initRestAssuredRequestDefaults(alwaysLogRequestAndResponse);
+    initRestAssuredResponseDefaults(alwaysLogRequestAndResponse);
   }
 
-  private void configureRestAssuredRequestDefaults() {
+  private void initRestAssuredRequestDefaults(boolean alwaysLogRequestAndResponse) {
     // Rest Assured's default baseURI (http://localhost) suffices, because it's default hostname (localhost) matches the
     // IP address that the stubbed WireMock server binds to / listens on by default (0.0.0.0)
     //RestAssured.baseURI = "http://localhost";
 
     RestAssured.port = wireMockRule.port();
-    RestAssured.requestSpecification = createDefaultRequestSpecification();
 
     // RestAssured.basePath is config'd in concrete sub-classes as it's the easiest way to configure the full URL path
     // for every test method, once, and once set RestAssured doesn't provide an easy way to query it or append to it.
+
+    RestAssured.requestSpecification = createDefaultRequestSpecification(alwaysLogRequestAndResponse);
   }
 
-  private void configureRestAssuredResponseDefaults() {
-    if (this.isAlwaysLogRequestAndResponse()) {
-      // RestAssurred doesn't currently support enabling logging using a ResponseSpecification as follows -
-      //   ResponseSpecification defaultResponseSpecification = new ResponseSpecBuilder().build().log().all();
-      //   RestAssured.responseSpecification = defaultResponseSpecification;
-      // It throws an IllegalStatException with the message
-      //   "Cannot configure logging since request specification is not defined. You may be misusing the API"
+  private void initRestAssuredResponseDefaults(boolean alwaysLogRequestAndResponse) {
+    if (alwaysLogRequestAndResponse) {
+      // RestAssured doesn't support enabling logging using a ResponseSpecification in the following expected way -
+      //   ResponseSpecification responseSpec = new ResponseSpecBuilder().build().log().all();
+      //   RestAssured.responseSpecification = responseSpec;
       // So, instead, enable response logging by adding a filter to the default list of filters.
       RestAssured.filters(new ResponseLoggingFilter());
     }
   }
 
   /**
-   * Create and configure a default RequestSpecification which ensures that by default all requests have the typically
-   * required Accept request header for the API under test.
+   * Create and configure a REST Assured {@link RequestSpecification} - a template specifying the defaults to be used
+   * for all API requests made by this test.
    *
-   * @return The REST Assured {@link RequestSpecification}
+   * @param alwaysLogRequestAndResponse {@code true} if HTTP requests and responses should always be logged, even if no
+   * assertions fail.
+   * @return the REST Assured {@link RequestSpecification}
    */
-  protected RequestSpecification createDefaultRequestSpecification() {
+  protected RequestSpecification createDefaultRequestSpecification(boolean alwaysLogRequestAndResponse) {
     RequestSpecification defaultRequestSpec = new RequestSpecBuilder()
       .setAccept(ContentType.APPLICATION_XML.getMimeType())
       .build();
-    if (this.isAlwaysLogRequestAndResponse()) {
+    if (alwaysLogRequestAndResponse) {
       defaultRequestSpec.log().all();
     }
     return defaultRequestSpec;
@@ -138,13 +138,14 @@ public abstract class AbstractRealmApiTest {
    */
   // package protected
   void deleteRealmResource(int realmId) {
-    RestAssured.given()
-      .basePath("")
-      .pathParam("realmId", realmId)
+    RestAssured
+      .given()
+        .basePath("")
+        .pathParam("realmId", realmId)
       .when()
-      .delete(UserRealmApiConstants.DELETE_REALM_URL_PATH)
+        .delete(UserRealmApiConstants.DELETE_REALM_URL_PATH)
       .then()
-      .assertThat().statusCode(HttpStatus.SC_NO_CONTENT);
+        .assertThat().statusCode(HttpStatus.SC_NO_CONTENT);
   }
 
   /**
@@ -156,16 +157,17 @@ public abstract class AbstractRealmApiTest {
    */
   // package protected
   UserRealmDto createRealmResource(UserRealmDto userRealm) {
-    return RestAssured.given()
-      .basePath(UserRealmApiConstants.CREATE_REALM_URL_PATH)
-      .contentType(ContentType.APPLICATION_XML.getMimeType())
-      .body(userRealm)
+    return RestAssured
+      .given()
+        .basePath(UserRealmApiConstants.CREATE_REALM_URL_PATH)
+        .contentType(ContentType.APPLICATION_XML.getMimeType())
+        .body(userRealm)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_CREATED)
-      .body(not(isEmptyOrNullString()))
-      .extract().body().as(UserRealmDto.class);
+        .assertThat().statusCode(HttpStatus.SC_CREATED)
+        .body(not(isEmptyOrNullString()))
+        .extract().body().as(UserRealmDto.class);
   }
 
   /**
@@ -183,21 +185,6 @@ public abstract class AbstractRealmApiTest {
       deleteRealmResource(Integer.parseInt(realm.getId()));
     } catch (Exception e) {
       this.getLogger().error("Error tearing down realm {}. Exception {}. Continuing...", realm, e.toString(), e);
-    }
-  }
-
-  /**
-   * @return {@code true} if HTTP requests and responses should always be logged, even if no assertions fail.
-   */
-  private boolean isAlwaysLogRequestAndResponse() {
-    return this.alwaysLogRequestAndResponse;
-  }
-
-  private void initAlwaysLogRequestAndResponse() {
-    this.alwaysLogRequestAndResponse = false;
-    String sysProp = System.getProperty(SYS_PROP_ALWAYS_LOG_REQ_AND_RESP);
-    if (sysProp != null) {
-      this.alwaysLogRequestAndResponse = Boolean.parseBoolean(sysProp.trim());
     }
   }
 

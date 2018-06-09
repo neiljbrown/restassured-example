@@ -84,12 +84,13 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   public void whenUnsupportedHttpMethodPost() {
     stubGetRealmWhenUnsupportedHttpMethod();
 
-    RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, 1)
+    RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, 1)
       .when()
-      .post()
+        .post()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
+        .assertThat().statusCode(HttpStatus.SC_METHOD_NOT_ALLOWED).body(isEmptyOrNullString());
   }
 
   /**
@@ -100,13 +101,14 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
   public void givenUnsupportedMediaTypeJson() {
     stubGetRealmWhenUnsupportedMediaType();
 
-    RestAssured.given()
-      .accept(ContentType.APPLICATION_JSON.getMimeType())
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, 1)
+    RestAssured
+      .given()
+        .accept(ContentType.APPLICATION_JSON.getMimeType())
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, 1)
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_NOT_ACCEPTABLE).body(isEmptyOrNullString());
+        .assertThat().statusCode(HttpStatus.SC_NOT_ACCEPTABLE).body(isEmptyOrNullString());
   }
 
   /**
@@ -117,23 +119,24 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
     final int realmId = UserRealmConstants.ID_MIN - 1;
     stubGetRealmWhenInvalidRealmId(Integer.toString(realmId));
 
-    RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+    RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        // Example of using XPath to assert body contents. XPath seems a bit clunkier than GPath for this purpose. The
-        // error diagnostics of the Hamcrest hasXPath() method it relies upon is also not as helpful as GPath - it
-        // returns the whole XML document, rather than what was matched.
-        // Note - Hamcrest's hasXPath() unexpectedly fails to return text value of node when using an XPath expression
-        // of either /error/code/text() or /error/code, resulting in an assertion failure. Therefore resorted to passing
-        // a full XPath condition to hasXPath() instead.
-        //hasXPath("/error/code/text()"), equalTo("InvalidRealmId"),
-        //hasXPath("/error/message/text()"), equalTo("Invalid realm id [" + realmId + "]."));
-        hasXPath("/error/code[text()='InvalidRealmId']"),
-        hasXPath("/error/message[text()='Invalid realm id [" + realmId + "].']"));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          // Example of using XPath to assert body contents. XPath seems a bit clunkier than GPath for this purpose. The
+          // error diagnostics of the Hamcrest hasXPath() method it relies upon is also not as helpful as GPath - it
+          // returns the whole XML document, rather than what was matched.
+          // Note - Hamcrest's hasXPath() unexpectedly fails to return text value of node when using an XPath expression
+          // of either /error/code/text() or /error/code, resulting in an assertion failure. Therefore resorted to
+          // passing a full XPath condition to hasXPath() instead.
+          //hasXPath("/error/code/text()"), equalTo("InvalidRealmId"),
+          //hasXPath("/error/message/text()"), equalTo("Invalid realm id [" + realmId + "]."));
+          hasXPath("/error/code[text()='InvalidRealmId']"),
+          hasXPath("/error/message[text()='Invalid realm id [" + realmId + "].']"));
 
   }
 
@@ -145,16 +148,17 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
     final int realmId = UserRealmConstants.ID_MAX + 1;
     stubGetRealmWhenInvalidRealmId(Integer.toString(realmId));
 
-    RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+    RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        // Uses REST Assured's support for Groovy's GPath expression language to match and extract XML
-        "error.code", equalTo("InvalidRealmId"),
-        "error.message", equalTo("Invalid realm id [" + realmId + "]."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          // Uses REST Assured's support for Groovy's GPath expression language to match and extract XML
+          "error.code", equalTo("InvalidRealmId"),
+          "error.message", equalTo("Invalid realm id [" + realmId + "]."));
   }
 
   /**
@@ -165,15 +169,16 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
     final String realmId = "foo";
     stubGetRealmWhenInvalidRealmId(realmId);
 
-    RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+    RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
-      .body(
-        "error.code", equalTo("InvalidRealmId"),
-        "error.message", equalTo("Invalid realm id [" + realmId + "]."));
+        .assertThat().statusCode(HttpStatus.SC_BAD_REQUEST)
+        .body(
+          "error.code", equalTo("InvalidRealmId"),
+          "error.message", equalTo("Invalid realm id [" + realmId + "]."));
   }
 
   /**
@@ -187,15 +192,16 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
 
     this.deleteRealmResource(realmId);
 
-    RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
+    RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, realmId)
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_NOT_FOUND)
-      .body(
-        "error.code", equalTo("RealmNotFound"),
-        "error.message", equalTo("Realm [" + realmId + "] not found."));
+        .assertThat().statusCode(HttpStatus.SC_NOT_FOUND)
+        .body(
+          "error.code", equalTo("RealmNotFound"),
+          "error.message", equalTo("Realm [" + realmId + "] not found."));
   }
 
 
@@ -211,14 +217,15 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
 
     stubGetRealmSuccessForRealm(createdRealm);
 
-    UserRealmDto gotRealm = RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
+    UserRealmDto gotRealm = RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_OK)
-      .body(not(isEmptyOrNullString()))
-      .extract().as(UserRealmDto.class);
+        .assertThat().statusCode(HttpStatus.SC_OK)
+        .body(not(isEmptyOrNullString()))
+        .extract().as(UserRealmDto.class);
 
     assertRealm(gotRealm, createdRealm);
   }
@@ -238,14 +245,15 @@ public class GetRealmApiTest extends AbstractRealmApiTest {
 
     stubGetRealmSuccessForRealm(createdRealm);
 
-    UserRealmDto gotRealm = RestAssured.given()
-      .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
+    UserRealmDto gotRealm = RestAssured
+      .given()
+        .pathParam(UserRealmApiConstants.REALM_ID_PATH_VAR_NAME, createdRealm.getId())
       .when()
-      .get()
+        .get()
       .then()
-      .assertThat().statusCode(HttpStatus.SC_OK)
-      .body(not(isEmptyOrNullString()))
-      .extract().as(UserRealmDto.class);
+        .assertThat().statusCode(HttpStatus.SC_OK)
+        .body(not(isEmptyOrNullString()))
+        .extract().as(UserRealmDto.class);
 
     assertRealm(gotRealm, createdRealm);
   }
