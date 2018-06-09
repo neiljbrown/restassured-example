@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1" ?>
+<!--
+An Apache Commons Configuration 2.x combined configuration definitions file.
+
+This file forms part of the solution for application configuration. It supports defining multiple configuration sources
+with overrides, currently a properties file containing a set of default values, and the ability to specify overrides
+using Java system properties.
+
+For more details see the Apache Commons Configuration 2.x User's Guide, specifically the 'Combined Configuration'
+section, currently available online at
+https://commons.apache.org/proper/commons-configuration/userguide/howto_combinedconfiguration.html#Combined_Configuration
+-->
+<configuration>
+
+  <!-- Allow Java system props to override (take precedence over) props configured in application.properties.
+       Order matters - must be declared before the properties file (first property source wins). -->
+  <system/>
+
+  <!-- Load default values for properties from props file -->
+  <properties fileName="application.properties"/>
+
+</configuration>

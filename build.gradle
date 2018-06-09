@@ -55,6 +55,8 @@ dependencies {
   testCompile("org.slf4j:slf4j-api:${slf4jVersion}")
   testCompile("ch.qos.logback:logback-classic:${logbackClassicVersion}")
   testCompile("com.github.tomakehurst:wiremock:${wiremockVersion}")
+  testCompile("org.apache.commons:commons-configuration2:${apacheCommonsConfigVersion}")
+  testCompile("commons-beanutils:commons-beanutils:${apacheCommonsBeanUtilsVersion}")
 }
 
 eclipse {

@@ -22,6 +22,11 @@ import io.restassured.RestAssured;
 import io.restassured.builder.RequestSpecBuilder;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.specification.RequestSpecification;
+import org.apache.commons.configuration2.CombinedConfiguration;
+import org.apache.commons.configuration2.ConfigurationUtils;
+import org.apache.commons.configuration2.ImmutableConfiguration;
+import org.apache.commons.configuration2.builder.fluent.Configurations;
+import org.apache.commons.configuration2.ex.ConfigurationException;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.Validate;
 import org.apache.http.HttpStatus;
@@ -48,8 +53,9 @@ import static org.hamcrest.Matchers.not;
  */
 public abstract class AbstractRealmApiTest {
 
-  private static final String SYS_PROP_PREFIX = "qatest.";
-  private static final String SYS_PROP_ALWAYS_LOG_REQ_AND_RESP = SYS_PROP_PREFIX + "alwaysLogReqAndResp";
+  private static final String ALWAYS_LOG_REQ_AND_RESP_PROPERTY = "alwaysLogApiRequestAndResponse";
+
+  protected ImmutableConfiguration config;
 
   /**
    * Automate the startup and shutdown of the WireMock mock HTTP server before and after the execution of each test to
@@ -60,6 +66,10 @@ public abstract class AbstractRealmApiTest {
    */
   @Rule
   public WireMockRule wireMockRule = new WireMockRule(wireMockConfig().dynamicPort().dynamicHttpsPort());
+
+  AbstractRealmApiTest() {
+    this.config = loadApplicationConfiguration();
+  }
 
   @Before
   public void setUp() throws Exception {
@@ -76,15 +86,18 @@ public abstract class AbstractRealmApiTest {
    */
   protected abstract Logger getLogger();
 
+  private ImmutableConfiguration loadApplicationConfiguration() {
+    try {
+      CombinedConfiguration config = new Configurations().combined("config.xml");
+      return ConfigurationUtils.unmodifiableConfiguration(config);
+    } catch (ConfigurationException e) {
+      throw new RuntimeException("Error loading application configuration. Cause: " + e.toString(), e);
+    }
+  }
+
   private void initRestAssured() {
     RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
-
-    boolean alwaysLogRequestAndResponse = false;
-    String sysProp = System.getProperty(SYS_PROP_ALWAYS_LOG_REQ_AND_RESP);
-    if (sysProp != null) {
-      alwaysLogRequestAndResponse = Boolean.parseBoolean(sysProp.trim());
-    }
-
+    boolean alwaysLogRequestAndResponse = this.config.getBoolean(ALWAYS_LOG_REQ_AND_RESP_PROPERTY, Boolean.TRUE);
     initRestAssuredRequestDefaults(alwaysLogRequestAndResponse);
     initRestAssuredResponseDefaults(alwaysLogRequestAndResponse);
   }

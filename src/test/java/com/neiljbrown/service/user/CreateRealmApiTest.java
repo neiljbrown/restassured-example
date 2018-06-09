@@ -59,6 +59,10 @@ public class CreateRealmApiTest extends AbstractRealmApiTest {
    */
   private List<UserRealmDto> createdRealms = new ArrayList<>();
 
+  public CreateRealmApiTest() {
+    super();
+  }
+
   @Override
   @Before
   public void setUp() throws Exception {
