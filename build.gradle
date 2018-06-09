@@ -66,3 +66,10 @@ eclipse {
     downloadJavadoc = true
   }
 }
+
+test {
+  testLogging {
+    showStandardStreams = true // Log any output that the tests write to stdout or stderr
+    events "passed", "skipped", "failed" // Log the execution of each test and its result
+  }
+}
