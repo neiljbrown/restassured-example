@@ -29,7 +29,6 @@ apply plugin: 'idea'
 //project.name - Property defined in settings.gradle, overriding the default used by Gradle which is based on proj dir
 project.group = 'com.neiljbrown.examples'
 project.description = 'An example of how to use the REST Assured library to implement black-box, functional tests for REST APIs.'
-project.version = 1.0
 
 // Set Java source & class versions to use when compiling. Needs to be defined after applying java plugin to take affect
 project.sourceCompatibility = 8
@@ -50,12 +49,12 @@ repositories {
 
 dependencies {
   //---- Test dependencies
-  testCompile('junit:junit:4.12')
-  testCompile('io.rest-assured:rest-assured:3.0.3')
-  testCompile('org.assertj:assertj-core:3.5.2')
-  testCompile('org.slf4j:slf4j-api:1.7.21')
-  testCompile('ch.qos.logback:logback-classic:1.1.7')
-  testCompile('com.github.tomakehurst:wiremock:2.6.0')
+  testCompile("junit:junit:${junitVersion}")
+  testCompile("io.rest-assured:rest-assured:${restAssuredVersion}")
+  testCompile("org.assertj:assertj-core:${assertjVersion}")
+  testCompile("org.slf4j:slf4j-api:${slf4jVersion}")
+  testCompile("ch.qos.logback:logback-classic:${logbackClassicVersion}")
+  testCompile("com.github.tomakehurst:wiremock:${wiremockVersion}")
 }
 
 eclipse {
